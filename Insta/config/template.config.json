@@ -1,17 +1,26 @@
 {
-  "base_url": "https://www.instagram.com",
-  "loginUrl": "https://www.instagram.com/accounts/login/",
+  "baseUrl": "https://www.instagram.com",
   "username": "username",
   "password": "password",
+
+  "hashTags": [
+    "vocalists",
+    "popmusic"
+  ],
 
   "settings": {
     "headless": true,
     "verbose": true,
+    "viewport": {
+      "width": 1000,
+      "height": 1080
+    },
     "args": [
       "--no-sandbox"
     ],
     "resourcePath": "resources"
   },
+
   "selectors": {
     "username": "input[name=\"username\"]",
     "password": "input[name=\"password\"]",

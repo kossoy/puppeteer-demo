@@ -17,12 +17,12 @@ class InstagramBrowser {
         this.page = await this.browser.newPage();
         this.cookies = {};
         if (this.config.settings.viewport) {
-            await this.page.setViewport({width: 1500, height: 764});
+            await this.page.setViewport(this.config.settings.viewport);
         }
     }
 
     async login() {
-        await this.page.goto(this.config.loginUrl);
+        await this.page.goto(`${this.config.baseUrl}/accounts/login/`);
         await this.page.waitForSelector(this.config.selectors.username);
         await this.page.type(this.config.selectors.username, this.config.username);
         await this.page.type(this.config.selectors.password, this.config.password);
@@ -42,8 +42,34 @@ class InstagramBrowser {
         }
     }
 
-    async getFollowers() {
-        await this.page.goto(`${this.config.base_url}/${this.config.username}`);
+    async getHashTagPeople(hashTag) {
+        const hashTagURL = `${this.config.baseUrl}/explore/tags/${hashTag}/?hl=en`;
+        await this.page.goto(hashTagURL);
+        this.log(`PROCESSING HASH ${hashTag}: ${hashTagURL}...`);
+        await this.page.waitForSelector(".v1Nh3 > a");
+        let top = [];
+
+        for (let i = 1; i < 4; i++) {
+            for (let j = 1; j < 4; j++) {
+                const selector = `.EZdmt  .Nnq7C:nth-child(${i}) > .v1Nh3:nth-child(${j}) > a`;
+                await this.page.$eval(selector, e => e.href).then(e => {
+                    top.push(e);
+                });
+            }
+        }
+        return top;
+    }
+
+    async getPersonPage(person) {
+        await Promise.all([
+            this.page.goto(person),
+            this.page.waitForNavigation({waitUntil: 'networkidle0'}),
+        ]);
+        return this.page.$eval(".e1e1d > a", e => e.href)
+    }
+
+    async getPersonFollowers(personPage) {
+        await this.page.goto(personPage);
         await this.page.waitForSelector(this.config.selectors.followers);
         const followers = await this.page.$eval(this.config.selectors.followers, e => e.innerText);
         return followers.replace('followers', '').trim();
@@ -66,10 +92,12 @@ class InstagramBrowser {
     }
 
     recordFollowers(followers) {
-        console.log(followers);
-        fs.appendFile(`${this.config.settings.resourcePath}/${this.timestamp}.csv`, `${followers}\n`, err => {
-            if (err) this.chalk.red.bold(err);
-        });
+        const path = `${this.config.settings.resourcePath}/followers.json`;
+        let people = JSON.parse(fs.readFileSync(path, 'utf8'));
+        for (const person of followers) {
+            people[person.page] = person.followers;
+        }
+        fs.writeFileSync(path, JSON.stringify(people, null, 2));
     }
 
     debug(msg) {
