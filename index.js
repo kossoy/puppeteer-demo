@@ -1,26 +1,21 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs');
-
-const url = 'https://www.instagram.com/hannahloupark/';
-const selector = 'div > section > main > div > header > section > ul > li:nth-child(2) > a';
-const scrShotFile = `resources/scr-${new Date().toISOString()}.png`;
-const logFile = `resources/text-file.txt`;
+const Insta = require('./Insta');
 
 (async () => {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto(url);
 
-    await page.screenshot({path: scrShotFile});
-    console.log(selector);
+    const insta = new Insta();
+    const startTime = insta.moment();
 
-    const html = await page.$eval(selector, e => e.innerText);
+    await insta.initPuppetter().then(() => insta.debug("PUPPETEER INITIALIZED"));
+    await insta.login().then(() => insta.debug("LOGGED IN"));
+    await insta.getFollowers().then(followers => {
+        insta.recordFollowers(followers);
+        insta.info(`FOLLOWERS: ${followers}`);
+    })
+    await insta.takeScreenShot().then(screenshot => insta.debug(`SCREENSHOT IN: ${screenshot}`))
+    await insta.makePDF().then(pdf => insta.debug(`PDF IN: ${pdf}`))
 
-    console.log(html);
-    fs.appendFile(logFile, `${html}\n`, err => {
-        if (err) console.log(err);
-    });
-
-    await browser.close();
+    await insta.closeBrowser().then(() => insta.debug("BROWSER CLOSED"));
+    insta.log(`EXECUTION TIME - ${insta.moment().diff(startTime, "seconds")} SECONDS`);
 })();
+
 
