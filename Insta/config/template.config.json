@@ -1,0 +1,22 @@
+{
+  "base_url": "https://www.instagram.com",
+  "loginUrl": "https://www.instagram.com/accounts/login/",
+  "username": "username",
+  "password": "password",
+
+  "settings": {
+    "headless": true,
+    "verbose": true,
+    "args": [
+      "--no-sandbox"
+    ],
+    "resourcePath": "resources"
+  },
+  "selectors": {
+    "username": "input[name=\"username\"]",
+    "password": "input[name=\"password\"]",
+    "loginButton": "button[type=\"submit\"]",
+    "followers": "div > section > main > div > header > section > ul > li:nth-child(2) > a",
+    "notNowButton": ".HoLwm"
+  }
+}

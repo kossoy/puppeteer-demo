@@ -8,9 +8,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "Oleg Kossoy <oleg.kossoy@sap.com>",
+  "author": "Oleg Kossoy <oleg.kossoy@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "chalk": "^4.0.0",
+    "moment": "^2.26.0",
     "puppeteer": "^3.1.0",
     "puppeteer-core": "^3.1.0"
   }
