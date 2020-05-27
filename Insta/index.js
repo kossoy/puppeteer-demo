@@ -100,6 +100,15 @@ class InstagramBrowser {
         fs.writeFileSync(path, JSON.stringify(people, null, 2));
     }
 
+    toInt(str) {
+        if (0 < str.indexOf('k')) {
+            str = parseFloat(str.replace('k', '-')) * 1000;
+        } else {
+            str = parseInt(str.replace(',', ''));
+        }
+        return str;
+    }
+
     debug(msg) {
         console.log(this.chalk.grey(msg));
     }

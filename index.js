@@ -16,12 +16,18 @@ const Insta = require('./Insta');
     let followersData = [];
     for (const person of people) {
         const personPage = await insta.getPersonPage(person);
-        const followers = await insta.getPersonFollowers(personPage);
-        followersData.push({
-            page: personPage,
-            followers: followers
-        })
-        insta.info(`PERSON PAGE: ${personPage}, FOLLOWERS: ${followers}`);
+        const followers = insta.toInt(await insta.getPersonFollowers(personPage));
+
+        let infoMsg = `PERSON PAGE: ${personPage}, FOLLOWERS: ${followers}`;
+        if (followers > 1000 && followers < 10000) {
+            followersData.push({
+                page: personPage,
+                followers: followers
+            })
+        } else {
+            infoMsg = `${infoMsg}, NOT GOOD`;
+        }
+        insta.info(infoMsg);
     }
 
     insta.recordFollowers(followersData);
