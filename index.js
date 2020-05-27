@@ -2,7 +2,7 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 
 const url = 'https://www.instagram.com/hannahloupark/';
-const selector = 'div > section > main > div > header > section > ul > li > a';
+const selector = 'div > section > main > div > header > section > ul > li:nth-child(2) > a';
 const scrShotFile = `resources/scr-${new Date().toISOString()}.png`;
 const logFile = `resources/text-file.txt`;
 
@@ -12,6 +12,7 @@ const logFile = `resources/text-file.txt`;
     await page.goto(url);
 
     await page.screenshot({path: scrShotFile});
+    console.log(selector);
 
     const html = await page.$eval(selector, e => e.innerText);
 
