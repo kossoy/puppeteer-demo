@@ -21,7 +21,7 @@ const Insta = require('./Insta');
             const followers = insta.toInt(await insta.getPersonFollowers(personPage));
 
             let infoMsg = `${hashTag}> PERSON PAGE: ${personPage}, FOLLOWERS: ${followers}`;
-            if (followers > 1000 && followers < 10000) {
+            if (followers > insta.config.followMin && followers < insta.config.followMax) {
                 const entry = {
                     username: insta.getUserFromUrl(personPage),
                     page: personPage,

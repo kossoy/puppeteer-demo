@@ -2,6 +2,8 @@
   "baseUrl": "https://www.instagram.com",
   "username": "username",
   "password": "password",
+  "followMin": 10000,
+  "followMax": 100000,
 
   "hashTags": [
     "vocalists",
