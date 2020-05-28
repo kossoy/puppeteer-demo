@@ -117,3 +117,4 @@ dist
 .pnp.*
 
 Insta/config/config.json
+/Insta/config/db.config.json

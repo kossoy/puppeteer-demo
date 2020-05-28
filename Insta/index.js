@@ -2,9 +2,11 @@ const fs = require('fs');
 
 class InstagramBrowser {
     constructor() {
+        this.db = require('./db')
         this.config = require('./config/config.json');
         this.chalk = require('chalk');
         this.moment = require('moment');
+        this.crypto = require('crypto')
         this.timestamp = this.moment().unix();
     }
 
@@ -95,7 +97,7 @@ class InstagramBrowser {
         const path = `${this.config.settings.resourcePath}/followers.json`;
         let people = JSON.parse(fs.readFileSync(path, 'utf8'));
         for (const person of followers) {
-            people[person.page] = person.followers;
+            people[this.getUserFromUrl(person.page)] = person;
         }
         fs.writeFileSync(path, JSON.stringify(people, null, 2));
     }
@@ -107,6 +109,15 @@ class InstagramBrowser {
             str = parseInt(str.replace(',', ''));
         }
         return str;
+    }
+
+    getUserFromUrl(url) {
+        let parts = url.split('/');
+        return parts.pop() || parts.pop();
+    }
+
+    getMd5(str) {
+        return this.crypto.createHash('md5').update(str).digest("hex")
     }
 
     debug(msg) {

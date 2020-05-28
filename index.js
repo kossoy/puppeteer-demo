@@ -8,26 +8,37 @@ const Insta = require('./Insta');
     await insta.initPuppetter().then(() => insta.debug("PUPPETEER INITIALIZED"));
     await insta.login().then(() => insta.debug("LOGGED IN"));
 
-    let people = [];
+    let hashTagPeopleUrls = {};
     for (const hashTag of insta.config.hashTags) {
-        people = people.concat(await insta.getHashTagPeople(hashTag));
+        hashTagPeopleUrls[hashTag] = await insta.getHashTagPeople(hashTag);
     }
 
     let followersData = [];
-    for (const person of people) {
-        const personPage = await insta.getPersonPage(person);
-        const followers = insta.toInt(await insta.getPersonFollowers(personPage));
+    for (const hashTag in hashTagPeopleUrls) {
+        insta.info(`PROCESSING HASHTAG: ${hashTag}`)
+        for (const person of hashTagPeopleUrls[hashTag]) {
+            const personPage = await insta.getPersonPage(person);
+            const followers = insta.toInt(await insta.getPersonFollowers(personPage));
 
-        let infoMsg = `PERSON PAGE: ${personPage}, FOLLOWERS: ${followers}`;
-        if (followers > 1000 && followers < 10000) {
-            followersData.push({
-                page: personPage,
-                followers: followers
-            })
-        } else {
-            infoMsg = `${infoMsg}, NOT GOOD`;
+            let infoMsg = `${hashTag}> PERSON PAGE: ${personPage}, FOLLOWERS: ${followers}`;
+            if (followers > 1000 && followers < 10000) {
+                const entry = {
+                    username: insta.getUserFromUrl(personPage),
+                    page: personPage,
+                    followers: followers,
+                    hashTag: hashTag
+                };
+                followersData.push(entry);
+                const userId = insta.getMd5(personPage);
+                const isNull = await insta.db.getVocalist(userId);
+                if (isNull) {
+                    await insta.db.addVocalists(userId, entry);
+                }
+            } else {
+                infoMsg = `${infoMsg}, NOT GOOD`;
+            }
+            insta.info(infoMsg);
         }
-        insta.info(infoMsg);
     }
 
     insta.recordFollowers(followersData);
