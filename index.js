@@ -13,7 +13,6 @@ const Insta = require('./Insta');
         hashTagPeopleUrls[hashTag] = await insta.getHashTagPeople(hashTag);
     }
 
-    let followersData = [];
     for (const hashTag in hashTagPeopleUrls) {
         insta.info(`PROCESSING HASHTAG: ${hashTag}`)
         for (const person of hashTagPeopleUrls[hashTag]) {
@@ -28,11 +27,10 @@ const Insta = require('./Insta');
                     followers: followers,
                     hashTag: hashTag
                 };
-                followersData.push(entry);
                 const userId = insta.getMd5(personPage);
                 const isNull = await insta.db.getVocalist(userId);
                 if (isNull) {
-                    await insta.db.addVocalists(userId, entry);
+                    await insta.db.addVocalists(userId, entry).then(() => insta.log(`ADDED ${userId} TO DB`));
                 }
             } else {
                 infoMsg = `${infoMsg}, NOT GOOD`;
@@ -41,13 +39,13 @@ const Insta = require('./Insta');
         }
     }
 
-    insta.recordFollowers(followersData);
-
     await insta.takeScreenShot().then(screenshot => insta.debug(`SCREENSHOT IN: ${screenshot}`))
     await insta.makePDF().then(pdf => insta.debug(`PDF IN: ${pdf}`))
 
     await insta.closeBrowser().then(() => insta.debug("BROWSER CLOSED"));
+
     insta.log(`EXECUTION TIME - ${insta.moment().diff(startTime, "seconds")} SECONDS`);
+    process.exit(0);
 })();
 
 
