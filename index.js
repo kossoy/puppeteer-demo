@@ -6,7 +6,7 @@ const Insta = require('./Insta');
     const startTime = insta.moment();
 
     await insta.initPuppetter().then(() => insta.debug("PUPPETEER INITIALIZED"));
-    await insta.login().then(() => insta.debug("LOGGED IN")).catch(e=>{
+    await insta.login().then(() => insta.debug("LOGGED IN")).catch(e => {
         insta.error(`CANNOT LOGIN`);
         insta.error(e);
     });
@@ -57,7 +57,10 @@ const Insta = require('./Insta');
                     await insta.db.addVocalists(userId, entry)
                         .then(() => {
                             insta.log(`ADDED ${userId} TO DB`);
-                            insta.makePDF(personName).then(pdf => insta.debug(`PDF IN: ${pdf}`));
+                            insta.makePDF(personName).then(pdf => insta.debug(`PDF IN: ${pdf}`)).catch(e => {
+                                insta.error(`ERROR CREATING ${personName} PDF`);
+                                insta.error(e);
+                            });
                         })
                         .catch(e => {
                             insta.error(`ERROR ADDING ${personName} TO DB`);
