@@ -46,8 +46,12 @@ class InstagramBrowser {
 
     async getHashTagPeople(hashTag) {
         const hashTagURL = `${this.config.baseUrl}/explore/tags/${hashTag}/?hl=en`;
-        await this.page.goto(hashTagURL);
-        this.log(`PROCESSING HASH ${hashTag}: ${hashTagURL}...`);
+        await this.page.goto(hashTagURL)
+            .catch(e => {
+                this.error(`CANNOT GET ${hashTagURL}`);
+                this.error(e);
+            });
+        this.info(`PROCESSING HASHTAG ${hashTag}: ${hashTagURL}...`);
         await this.page.waitForSelector(".v1Nh3 > a");
         let top = [];
 
@@ -56,7 +60,10 @@ class InstagramBrowser {
                 const selector = `.EZdmt  .Nnq7C:nth-child(${i}) > .v1Nh3:nth-child(${j}) > a`;
                 await this.page.$eval(selector, e => e.href).then(e => {
                     top.push(e);
-                });
+                })
+                    .catch(e => {
+                        this.error(e);
+                    });
             }
         }
         return top;
@@ -83,8 +90,8 @@ class InstagramBrowser {
         return path;
     }
 
-    async makePDF() {
-        const path = `${this.config.settings.resourcePath}/${this.timestamp}.pdf`;
+    async makePDF(name) {
+        const path = `${this.config.settings.resourcePath}/${name}.pdf`;
         await this.page.pdf({path: path, format: 'A4'});
         return path;
     }
@@ -130,6 +137,10 @@ class InstagramBrowser {
 
     log(msg) {
         console.log(this.chalk.black(msg));
+    }
+
+    error(msg) {
+        console.log(this.chalk.red.bold(msg));
     }
 }
 
