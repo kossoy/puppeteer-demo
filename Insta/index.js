@@ -46,13 +46,17 @@ class InstagramBrowser {
 
     async getHashTagPeople(hashTag) {
         const hashTagURL = `${this.config.baseUrl}/explore/tags/${hashTag}/?hl=en`;
-        await this.page.goto(hashTagURL)
-            .catch(e => {
-                this.error(`CANNOT GET ${hashTagURL}`);
-                this.error(e);
-            });
+
+        await Promise.all([
+            this.page.goto(hashTagURL),
+            this.page.waitForNavigation({waitUntil: 'networkidle0'}),
+            this.page.waitForSelector(".v1Nh3 > a")
+        ]).catch(e => {
+            this.error(`CANNOT GET ${hashTagURL}`);
+            this.error(e);
+        });
+
         this.info(`PROCESSING HASHTAG ${hashTag}: ${hashTagURL}...`);
-        await this.page.waitForSelector(".v1Nh3 > a");
         let top = [];
 
         for (let i = 1; i < 4; i++) {
@@ -72,16 +76,28 @@ class InstagramBrowser {
     async getPersonPage(person) {
         await Promise.all([
             this.page.goto(person),
-            this.page.waitForNavigation({waitUntil: 'networkidle0'}),
+            this.page.waitForNavigation({waitUntil: 'networkidle0'})
         ]);
         return this.page.$eval(".e1e1d > a", e => e.href)
     }
 
+    async getAvatar(personPage) {
+        await Promise.all([
+            this.page.goto(personPage),
+            this.page.waitForNavigation({waitUntil: 'networkidle0'})
+        ]);
+        return this.page.$eval("header img", e => e.src);
+    }
+
     async getPersonFollowers(personPage) {
-        await this.page.goto(personPage);
-        await this.page.waitForSelector(this.config.selectors.followers);
+        await Promise.all([
+            this.page.goto(personPage),
+            this.page.waitForNavigation({waitUntil: 'networkidle0'})
+        ]);
         const followers = await this.page.$eval(this.config.selectors.followers, e => e.innerText);
-        return followers.replace('followers', '').trim();
+        if (followers) {
+            return followers.replace('followers', '').trim();
+        }
     }
 
     async takeScreenShot() {

@@ -30,13 +30,18 @@ const Insta = require('./Insta');
                     insta.error(e);
                 });
 
+
+
             followers = insta.toInt(followers);
 
             let infoMsg = `${hashTag}> PERSON PAGE: ${personPage}, FOLLOWERS: ${followers}`;
             if (followers > insta.config.followMin && followers < insta.config.followMax) {
                 const personName = insta.getUserFromUrl(personPage);
+                const avatar = insta.getAvatar(personPage);
+                console.log(avatar);
                 const entry = {
                     username: personName,
+                    avatar: avatar,
                     page: personPage,
                     followers: followers,
                     hashTag: hashTag,
