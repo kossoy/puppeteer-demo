@@ -110,11 +110,12 @@ class InstagramBrowser {
     }
 
     toInt(str) {
-        if (0 < str.indexOf('k')) {
-            str = parseFloat(str.replace('k', '-')) * 1000;
-        } else {
-            str = parseInt(str.replace(',', ''));
-        }
+        if ((typeof str === 'string'))
+            if (0 < str.indexOf('k')) {
+                str = parseFloat(str.replace('k', '-')) * 1000;
+            } else {
+                str = parseInt(str.replace(',', ''));
+            }
         return str;
     }
 

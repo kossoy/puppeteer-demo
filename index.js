@@ -6,7 +6,10 @@ const Insta = require('./Insta');
     const startTime = insta.moment();
 
     await insta.initPuppetter().then(() => insta.debug("PUPPETEER INITIALIZED"));
-    await insta.login().then(() => insta.debug("LOGGED IN"));
+    await insta.login().then(() => insta.debug("LOGGED IN")).catch(e=>{
+        insta.error(`CANNOT LOGIN`);
+        insta.error(e);
+    });
 
     let hashTagPeopleUrls = {};
     for (const hashTag of insta.config.hashTags) {
@@ -20,13 +23,14 @@ const Insta = require('./Insta');
                     insta.error(`CANNOT GET ${person} PAGE`);
                     insta.error(e);
                 });
-            const followers = insta.toInt(
-                await insta.getPersonFollowers(personPage)
-                    .catch(e => {
-                        insta.error(`CANNOT GET ${personPage} FOLLOWERS`);
-                        insta.error(e);
-                    })
-            );
+            let followers = 0;
+            followers = await insta.getPersonFollowers(personPage)
+                .catch(e => {
+                    insta.error(`CANNOT GET ${personPage} FOLLOWERS`);
+                    insta.error(e);
+                });
+
+            followers = insta.toInt(followers);
 
             let infoMsg = `${hashTag}> PERSON PAGE: ${personPage}, FOLLOWERS: ${followers}`;
             if (followers > insta.config.followMin && followers < insta.config.followMax) {
@@ -40,7 +44,15 @@ const Insta = require('./Insta');
                 };
                 insta.info(`PROCESSING: ${personName}`);
                 const userId = insta.getMd5(personPage);
-                const vocalist = await insta.db.getVocalist(userId);
+                let vocalist = null;
+                await insta.db.getVocalist(userId).then(data => {
+                    if (null === !data) {
+                        vocalist = data.val();
+                    }
+                }).catch(e => {
+                    insta.error(`ERROR getting ${personName} data from DB`);
+                    insta.error(e);
+                });
                 if (!vocalist) {
                     await insta.db.addVocalists(userId, entry)
                         .then(() => {
