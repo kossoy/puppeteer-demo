@@ -24,18 +24,36 @@ class InstagramBrowser {
     }
 
     async login() {
-        await this.page.goto(`${this.config.baseUrl}/accounts/login/`);
-        await this.page.waitForSelector(this.config.selectors.username);
-        await this.page.type(this.config.selectors.username, this.config.username);
-        await this.page.type(this.config.selectors.password, this.config.password);
+        await this.page.goto(`${this.config.baseUrl}/accounts/login/`)
+            .catch(e => {
+                this.error(e);
+            });
+        await this.page.waitForSelector(this.config.selectors.username)
+            .catch(e => {
+                this.error(e);
+            });
+        await this.page.type(this.config.selectors.username, this.config.username)
+            .catch(e => {
+                this.error(e);
+            });
+        await this.page.type(this.config.selectors.password, this.config.password)
+            .catch(e => {
+                this.error(e);
+            });
 
         await Promise.all([
             this.page.click(this.config.selectors.loginButton),
             this.page.waitForNavigation({waitUntil: 'networkidle0'}),
-        ]);
+        ])
+            .catch(e => {
+                this.error(e);
+            });
 
         if (!this.config.settings.headless) {
-            await this.page.click(this.config.selectors.notNowButton);
+            await this.page.click(this.config.selectors.notNowButton)
+                .catch(e => {
+                    this.error(e);
+                });
         }
 
         this.cookies = await this.page.cookies();
@@ -62,9 +80,10 @@ class InstagramBrowser {
         for (let i = 1; i < 4; i++) {
             for (let j = 1; j < 4; j++) {
                 const selector = `.EZdmt  .Nnq7C:nth-child(${i}) > .v1Nh3:nth-child(${j}) > a`;
-                await this.page.$eval(selector, e => e.href).then(e => {
-                    top.push(e);
-                })
+                await this.page.$eval(selector, e => e.href)
+                    .then(e => {
+                        top.push(e);
+                    })
                     .catch(e => {
                         this.error(e);
                     });
@@ -79,14 +98,22 @@ class InstagramBrowser {
             this.page.waitForNavigation({waitUntil: 'networkidle0'})
         ]);
         return this.page.$eval(".e1e1d > a", e => e.href)
+            .catch(e => {
+                this.error(e);
+            });
     }
 
     async getAvatar(personPage) {
         await Promise.all([
             this.page.goto(personPage),
             this.page.waitForNavigation({waitUntil: 'networkidle0'})
-        ]);
-        return this.page.$eval("header img", e => e.src);
+        ]).catch(e => {
+            this.error(e);
+        });
+        return await this.page.$eval("header img", e => e.src)
+            .catch(e => {
+                this.error(e);
+            });
     }
 
     async getPersonFollowers(personPage) {
@@ -94,7 +121,10 @@ class InstagramBrowser {
             this.page.goto(personPage),
             this.page.waitForNavigation({waitUntil: 'networkidle0'})
         ]);
-        const followers = await this.page.$eval(this.config.selectors.followers, e => e.innerText);
+        const followers = await this.page.$eval(this.config.selectors.followers, e => e.innerText)
+            .catch(e => {
+                this.error(e);
+            });
         if (followers) {
             return followers.replace('followers', '').trim();
         }
@@ -102,18 +132,27 @@ class InstagramBrowser {
 
     async takeScreenShot() {
         const path = `${this.config.settings.resourcePath}/${this.timestamp}.png`;
-        await this.page.screenshot({path: path});
+        await this.page.screenshot({path: path})
+            .catch(e => {
+                this.error(e);
+            });
         return path;
     }
 
     async makePDF(name) {
         const path = `${this.config.settings.resourcePath}/${name}.pdf`;
-        await this.page.pdf({path: path, format: 'A4'});
+        await this.page.pdf({path: path, format: 'A4'})
+            .catch(e => {
+                this.error(e);
+            });
         return path;
     }
 
     async closeBrowser() {
-        await this.browser.close();
+        await this.browser.close()
+            .catch(e => {
+                this.error(e);
+            });
     }
 
     recordFollowers(followers) {
@@ -128,7 +167,7 @@ class InstagramBrowser {
     toInt(str) {
         if ((typeof str === 'string'))
             if (0 < str.indexOf('k')) {
-                str = parseFloat(str.replace('k', '-')) * 1000;
+                str = parseFloat(str.replace('k', '')) * 1000;
             } else {
                 str = parseInt(str.replace(',', ''));
             }

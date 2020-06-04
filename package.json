@@ -16,5 +16,8 @@
     "moment": "^2.26.0",
     "puppeteer": "^3.1.0",
     "puppeteer-core": "^3.1.0"
+  },
+  "devDependencies": {
+    "lodash": "^4.17.15"
   }
 }

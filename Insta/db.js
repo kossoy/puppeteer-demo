@@ -13,11 +13,27 @@ async function getVocalist(userId) {
     return await database.ref(`vocalists/${userId}`).once('value');
 }
 
+async function getVocalists() {
+    let vocalists = [];
+    await database.ref('vocalists')
+        .once('value')
+        .then(snap => {
+            snap.forEach(data => {
+                vocalists.push(data.val())
+            })
+        })
+        .catch(e => {
+            console.log(e);
+        });
+    return vocalists;
+}
+
 async function addVocalists(userId, data) {
     await database.ref('vocalists/' + userId).set(data);
 }
 
 module.exports = {
     addVocalists,
-    getVocalist
+    getVocalist,
+    getVocalists
 };

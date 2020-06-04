@@ -1,4 +1,6 @@
 const Insta = require('./Insta');
+const _ = require('lodash');
+
 
 (async () => {
 
@@ -12,73 +14,83 @@ const Insta = require('./Insta');
     });
 
     let hashTagPeopleUrls = {};
+    let hashTagPeopleArr = [];
     for (const hashTag of insta.config.hashTags) {
-        hashTagPeopleUrls[hashTag] = await insta.getHashTagPeople(hashTag);
+        // Get links to the people's preview popup page
+        const peoplePreviewPages = await insta.getHashTagPeople(hashTag)
+            .catch(e => {
+                this.error(e);
+            });
+        hashTagPeopleUrls[hashTag] = peoplePreviewPages;
+        for (const personPreviewPage of peoplePreviewPages) {
+            hashTagPeopleArr.push({
+                hashTag: hashTag,
+                previewPage: personPreviewPage
+            });
+        }
     }
 
-    for (const hashTag in hashTagPeopleUrls) {
-        for (const person of hashTagPeopleUrls[hashTag]) {
-            const personPage = await insta.getPersonPage(person)
+    const dbEntries = await insta.db.getVocalists()
+        .catch(e => {
+            this.error(e);
+        });
+
+    let dif = _.differenceBy(hashTagPeopleArr, dbEntries, 'previewPage');
+
+    for (const difElement of dif) {
+        const person = difElement.previewPage;
+        const hashTag = difElement.hashTag;
+        const personPage = await insta.getPersonPage(person)
+            .catch(e => {
+                insta.error(`CANNOT GET ${person} PAGE`);
+                insta.error(e);
+            });
+
+        console.log(person);
+        console.log(personPage);
+
+        let followers = 0;
+        followers = await insta.getPersonFollowers(personPage)
+            .catch(e => {
+                insta.error(`CANNOT GET ${personPage} FOLLOWERS`);
+                insta.error(e);
+            });
+
+        followers = insta.toInt(followers);
+
+        let infoMsg = `${hashTag}> PERSON PAGE: ${personPage}, FOLLOWERS: ${followers}`;
+        if (followers > insta.config.followMin && followers < insta.config.followMax) {
+            const personName = await insta.getUserFromUrl(personPage);
+            const avatar = await insta.getAvatar(personPage);
+            const entry = {
+                username: personName,
+                avatar: avatar,
+                previewPage: person,
+                page: personPage,
+                followers: followers,
+                hashTag: hashTag,
+                added: insta.timestamp
+            };
+
+            console.log(entry);
+
+            insta.info(`PROCESSING: ${personName}`);
+            const userId = insta.getMd5(personPage);
+
+            await insta.db.addVocalists(userId, entry)
+                .then(() => {
+                    insta.log(`ADDED ${userId} TO DB`);
+                })
                 .catch(e => {
-                    insta.error(`CANNOT GET ${person} PAGE`);
-                    insta.error(e);
-                });
-            let followers = 0;
-            followers = await insta.getPersonFollowers(personPage)
-                .catch(e => {
-                    insta.error(`CANNOT GET ${personPage} FOLLOWERS`);
+                    insta.error(`ERROR ADDING ${personName} TO DB`);
                     insta.error(e);
                 });
 
-
-
-            followers = insta.toInt(followers);
-
-            let infoMsg = `${hashTag}> PERSON PAGE: ${personPage}, FOLLOWERS: ${followers}`;
-            if (followers > insta.config.followMin && followers < insta.config.followMax) {
-                const personName = insta.getUserFromUrl(personPage);
-                const avatar = insta.getAvatar(personPage);
-                console.log(avatar);
-                const entry = {
-                    username: personName,
-                    avatar: avatar,
-                    page: personPage,
-                    followers: followers,
-                    hashTag: hashTag,
-                    added: insta.timestamp
-                };
-                insta.info(`PROCESSING: ${personName}`);
-                const userId = insta.getMd5(personPage);
-                let vocalist = null;
-                await insta.db.getVocalist(userId).then(data => {
-                    if (null === !data) {
-                        vocalist = data.val();
-                    }
-                }).catch(e => {
-                    insta.error(`ERROR getting ${personName} data from DB`);
-                    insta.error(e);
-                });
-                if (!vocalist) {
-                    await insta.db.addVocalists(userId, entry)
-                        .then(() => {
-                            insta.log(`ADDED ${userId} TO DB`);
-                            insta.makePDF(personName).then(pdf => insta.debug(`PDF IN: ${pdf}`)).catch(e => {
-                                insta.error(`ERROR CREATING ${personName} PDF`);
-                                insta.error(e);
-                            });
-                        })
-                        .catch(e => {
-                            insta.error(`ERROR ADDING ${personName} TO DB`);
-                            insta.error(e);
-                        });
-                } else {
-                    insta.info(`${personName} already added`);
-                }
-            } else {
-                infoMsg = `${infoMsg}, NOT GOOD`;
-            }
-            insta.debug(infoMsg);
+        } else {
+            infoMsg = `${infoMsg}, NOT GOOD`;
         }
+
+        insta.debug(infoMsg);
     }
 
     await insta.closeBrowser().then(() => insta.debug("BROWSER CLOSED"));
